@@ -9,3 +9,5 @@ build/
 dist/
 Thumbs.db
 Thumbs.db:encryptable
+__pycache__/
+*.py[cod]
