@@ -12,10 +12,12 @@ class Api:
         username: str = "",
         password: str = "",
         logging: bool = False,
+        timeout: float = 30,
     ) -> None:
         self.base_url: str = base_url
         self.auth: tuple[str, str] = (username, password)
         self.logging: bool = logging
+        self.timeout: float = timeout
         self.verify_https: bool = urlparse(url=self.base_url).hostname not in (
             "localhost",
             "127.0.0.1",
@@ -49,6 +51,7 @@ class Api:
             },
             auth=auth,
             verify=self.verify_https,
+            timeout=self.timeout,
         )
 
         self.log_response(response=response)
@@ -67,6 +70,7 @@ class Api:
             auth=self.auth,
             json=json,
             verify=self.verify_https,
+            timeout=self.timeout,
         )
 
         self.log_response(response=response)
