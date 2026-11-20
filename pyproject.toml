@@ -30,6 +30,14 @@ dependencies = [
 "Homepage" = "https://github.com/GrawRadiosondes/grawgo-api-python"
 "Bug Tracker" = "https://github.com/GrawRadiosondes/grawgo-api-python/issues"
 
+# Internal package index; releases are published there, not to public PyPI
+# (see .github/workflows/publish.yml).
+[[tool.uv.index]]
+name = "graw"
+url = "https://pypi.app.graw-ops.com/simple/"
+publish-url = "https://pypi.app.graw-ops.com/"
+explicit = true
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::urllib3.exceptions.InsecureRequestWarning"

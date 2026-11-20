@@ -5,8 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 `grawgo` is a small Python client library for the grawGo REST API (radiosonde/weather-balloon
-tracking: users, stations, flights, measurements). It's published to PyPI as `grawgo` and consumed
-by other projects — it has no CLI/app of its own.
+tracking: users, stations, flights, measurements). It's published as `grawgo` to the internal
+package index `https://pypi.app.graw-ops.com` (pypiserver, see app-hosting `pypi/README.md`) and
+consumed by other projects — it has no CLI/app of its own. Older releases (up to 2.5.0) are also on
+public PyPI, which is no longer published to.
 
 ## Commands
 
@@ -63,4 +65,6 @@ From `README.md`, cutting a release is manual:
 5. `git push --follow-tags`
 
 Pushing a tag matching `*.*.*` triggers `.github/workflows/publish.yml`, which checks formatting,
-builds with `uv build`, and publishes to PyPI via trusted publishing (no stored token).
+builds with `uv build`, and uploads to the internal index as `publisher` (repo secret
+`PYPI_PASSWORD`). Uploaded versions are immutable. `gh workflow run publish.yml -f tag=vX.Y.Z`
+(re)publishes an existing tag; files already on the index are skipped.

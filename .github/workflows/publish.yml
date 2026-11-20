@@ -1,20 +1,51 @@
+# Builds the wheel and sdist and publishes them to the internal package index
+# https://pypi.app.graw-ops.com (pypiserver, see app-hosting `pypi/README.md`).
+# Tags come from `bump-my-version` (format `v<version>`).
+# workflow_dispatch (re)publishes an existing tag, e.g. after a failed publish
+# or to backfill a release.
+
 on:
   push:
     tags:
       - "*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)publish, e.g. v2.5.0"
+        required: true
+        type: string
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+concurrency:
+  group: publish-${{ inputs.tag || github.ref_name }}
+
+permissions:
+  contents: read
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/grawgo
-    permissions:
-      id-token: write
-      contents: read
+    runs-on: ephemeral-runners
     steps:
+      # refs/tags/ makes a dispatch with a branch name or a typo fail here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uvx ruff format --check
       - run: uv build
-      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
+      # Versions on the index are immutable (pypiserver refuses overwrites).
+      # The check URL makes uv skip files already uploaded with the same hash,
+      # so a rerun finishes a partial upload. uv doesn't send --username/
+      # --password to the check URL, hence the credentials in it.
+      # Publish URL is given explicitly (not via `--index graw`) so that old
+      # tags without the index config in pyproject.toml publish too.
+      - name: Publish
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          uv publish --publish-url https://pypi.app.graw-ops.com/ \
+            --check-url "https://publisher:${PYPI_PASSWORD}@pypi.app.graw-ops.com/simple/" \
+            --username publisher --password "$PYPI_PASSWORD" dist/*
+          echo "Published grawgo ${TAG#v} to https://pypi.app.graw-ops.com/simple/grawgo/" >> "$GITHUB_STEP_SUMMARY"
